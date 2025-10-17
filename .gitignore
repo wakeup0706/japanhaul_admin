@@ -1,0 +1,158 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+/node_modules
+/.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+
+# testing
+/coverage
+/coverage/
+
+# next.js
+/.next/
+/out/
+
+# production
+/build
+/build/
+/dist/
+/dist/
+
+# misc
+.DS_Store
+*.pem
+
+# Local cache
+.pnpm-store/
+.pnpm-store/
+
+# Misc
+*.local
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# logs
+logs
+logs/
+*.log
+
+# env files (can opt-in for committing if needed)
+.env
+.env*
+.env.local
+.env
+.env.*
+.env
+.env.*
+
+# vercel
+.vercel
+.turbo
+
+# typescript
+*.tsbuildinfo
+*.tsbuildinfo
+next-env.d.ts
+
+# All .md files (documentation)
+*.md
+**/*.md
+
+# Scripts folder (contains hardcoded credentials and scraping tools)
+scripts/
+**/scripts/
+
+# Development scripts and tools (not needed for deployment)
+*.sh
+**/*.sh
+test-*.js
+test-*.mjs
+**/*.test.*
+**/*.spec.*
+
+# Scraping related files (not needed for deployment)
+src/lib/scraper.ts
+src/lib/scraper-example.ts
+src/lib/scraping-config.ts
+
+# Scraping API routes (depend on scraper files - but NOT products/db which is needed!)
+src/app/api/scrape/
+src/app/api/cron/scrape/
+src/app/api/products/scraped/
+
+# Admin scraping pages (entire directory)
+src/app/[lang]/admin/scraping/
+
+# Entire admin folder (not needed for deployment)
+src/app/[lang]/admin/
+
+# Scraping UI components
+src/app/_components/ScrapeButton.tsx
+
+# All scraping scripts and related files
+scripts/
+**/*.sh
+test-*.js
+test-*.mjs
+**/*.test.*
+**/*.spec.*
+scrape-*.sh
+scrape-*.mjs
+scrape-*.js
+test-scraper.*
+run-scraper-*
+setup-cron.*
+check-firebase.*
+add-sample-*
+
+# Stripe webhook (requires additional setup, optional for basic functionality)
+src/app/api/webhooks/stripe/route.ts
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Temporary and cache files
+*.tmp
+*.temp
+.cache/
+.cache/
+.turbo
+
+# Local development files
+.vercel
+.turbo
