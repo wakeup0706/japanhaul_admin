@@ -1,0 +1,143 @@
+{
+  "site": {"title": "JapanHaul"},
+  "search": {
+    "placeholder": "検索",
+    "title": "検索",
+    "products": "商品",
+    "typeToSearch": "商品名で検索",
+    "noMatches": "該当なし",
+    "view": "見る"
+  },
+  "auth": {"login": "ログイン"},
+  "promo": {
+    "messages": [
+      "コード LAUNCH30 で30%オフ!",
+      "米国へは民間配送で通常通り発送中",
+      "アドベントカレンダー先行予約で20%オフ!"
+    ]
+  },
+  "category": {
+    "trending": "トレンド",
+    "new": "新着",
+    "sale": "セール",
+    "snacks": "スナック",
+    "kawaii": "かわいい",
+    "beauty": "ビューティー"
+  },
+  "home": {
+    "seasonal": "限定",
+    "shopNow": "今すぐ購入",
+    "viewCollection": "コレクションを見る",
+    "spotlight1": "ポケモン ハロウィン コレクション",
+    "spotlight2": "スターバックス 月見 コレクション",
+    "bundleTitle": "日本のハロウィンバンドル",
+    "bundleDesc": "日本のベストなハロウィンスナックを詰め合わせたスペシャルバンドル！",
+    "limited": "数量限定",
+    "product": "商品",
+    "price": "${value} USD"
+  },
+  "checkout": {
+    "title": "チェックアウト",
+    "contact": "連絡先",
+    "email": "メール",
+    "delivery": "配送",
+    "payment": "支払い",
+    "pay": "今すぐ支払う",
+    "discount": "割引コードまたはギフトカード",
+    "subtotal": "小計",
+    "shipping": "送料",
+    "enterShipping": "配送先住所を入力",
+    "total": "合計"
+  },
+  "footer": {
+    "shop": {
+      "title": "ショップ",
+      "trending": "トレンド",
+      "newArrivals": "新着",
+      "onSale": "セール",
+      "collections": "コレクション"
+    },
+    "care": {
+      "title": "カスタマーサポート",
+      "account": "マイアカウント",
+      "contact": "お問い合わせ",
+      "faqs": "よくある質問",
+      "shippingReturns": "配送・返品"
+    },
+    "about": {
+      "title": "当サイトについて",
+      "aboutUs": "会社情報",
+      "careers": "採用情報",
+      "privacy": "プライバシー",
+      "terms": "利用規約"
+    },
+    "copyright": "© 2025 JapanHaul クローン"
+  },
+  "cart": {
+    "title": "カート",
+    "empty": "カートは空です",
+    "remove": "削除",
+    "estimated": "概算合計",
+    "viewCart": "カートを見る",
+    "checkout": "レジに進む"
+  },
+  "breadcrumbs": {
+    "home": "ホーム",
+    "routes": {
+      "products": "商品一覧",
+      "cart": "カート",
+      "checkout": "チェックアウト",
+      "confirmation": "確認",
+      "delivery": "配送",
+      "login": "ログイン",
+      "register": "登録",
+      "forgot-password": "パスワードをお忘れの方",
+      "account": "アカウント",
+      "admin": "管理者",
+      "scraping": "スクレイピング"
+    }
+  },
+  "products": {
+    "title": "すべての商品",
+    "filters": {
+      "availability": "在庫状況",
+      "inStock": "在庫あり",
+      "outOfStock": "在庫なし",
+      "price": "価格",
+      "to": "〜",
+      "max": "上限",
+      "brand": "ブランド",
+      "productType": "商品タイプ",
+      "region": "国/地域"
+    },
+    "count": "{count} 件の商品",
+    "sortBy": "並び替え:",
+    "sort": {
+      "best": "売れ筋順",
+      "alphaAsc": "名前順（A→Z）",
+      "alphaDesc": "名前順（Z→A）",
+      "priceAsc": "価格の安い順",
+      "priceDesc": "価格の高い順"
+    },
+    "quick": {
+      "inStock": "在庫あり・すぐに発送",
+      "about": "商品の詳細",
+      "aboutText": "日本らしさを感じるアイテムを詰め合わせたセットです。こちらはクイックビュー用のプレースホルダー文です。",
+      "viewDetails": "詳しく見る"
+    }
+  },
+  "productDetail": {
+    "back": "戻る",
+    "title": "商品",
+    "addToCart": "カートに入れる",
+    "description": "プレースホルダーの説明。",
+    "shipsTokyo": "東京から直接発送",
+    "securePayments": "安全な決済",
+    "whatsInside": "内容物",
+    "feature1": "厳選されたグッズ詰め合わせ。",
+    "feature2": "楽しいスナックミックスとサプライズ。",
+    "feature3": "ギフトに最適。",
+    "youMayLike": "こちらもおすすめ",
+    "noRelatedProducts": "関連商品はありません"
+  }
+}

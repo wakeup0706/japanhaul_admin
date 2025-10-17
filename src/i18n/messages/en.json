@@ -1,0 +1,151 @@
+{
+  "site": {
+    "title": "JapanHaul"
+  },
+  "search": {
+    "placeholder": "Search",
+    "title": "Search",
+    "products": "Products",
+    "typeToSearch": "Type to search products",
+    "noMatches": "No matches",
+    "view": "View"
+  },
+  "auth": {
+    "login": "Log in"
+  },
+  "promo": {
+    "messages": [
+      "Use code LAUNCH30 to get 30% OFF!",
+      "We're still shipping to the U.S. via private carriers",
+      "Preorder now & save 20% on Advent Calendars!"
+    ]
+  },
+  "category": {
+    "trending": "Trending",
+    "new": "New",
+    "sale": "Sale",
+    "snacks": "Snacks",
+    "kawaii": "Kawaii",
+    "beauty": "Beauty"
+  },
+  "home": {
+    "seasonal": "Seasonal Exclusive",
+    "shopNow": "Shop Now",
+    "viewCollection": "View Collection",
+    "spotlight1": "Pokemon Halloween Collection",
+    "spotlight2": "Starbucks Tsukimi Collection",
+    "bundleTitle": "Japanese Halloween Bundle",
+    "bundleDesc": "Trick or treat yourself to this devilishly good Halloween Bundle! Featuring all the best Halloween snacks Japan has to offer!",
+    "limited": "Limited Quantity",
+    "product": "Product",
+    "price": "${value} USD"
+  },
+  "checkout": {
+    "title": "Checkout",
+    "contact": "Contact",
+    "email": "Email",
+    "delivery": "Delivery",
+    "payment": "Payment",
+    "pay": "Pay now",
+    "discount": "Discount code or gift card",
+    "subtotal": "Subtotal",
+    "shipping": "Shipping",
+    "enterShipping": "Enter shipping address",
+    "total": "Total"
+  },
+  "footer": {
+    "shop": {
+      "title": "Shop",
+      "trending": "Trending",
+      "newArrivals": "New arrivals",
+      "onSale": "On sale",
+      "collections": "Collections"
+    },
+    "care": {
+      "title": "Customer care",
+      "account": "My account",
+      "contact": "Contact",
+      "faqs": "FAQs",
+      "shippingReturns": "Shipping & returns"
+    },
+    "about": {
+      "title": "About",
+      "aboutUs": "About us",
+      "careers": "Careers",
+      "privacy": "Privacy",
+      "terms": "Terms"
+    },
+    "copyright": "© 2025 JapanHaul Clone"
+  }
+  ,
+  "cart": {
+    "title": "Your cart",
+    "empty": "Your cart is empty",
+    "remove": "Remove",
+    "estimated": "Estimated total",
+    "viewCart": "View Cart",
+    "checkout": "Checkout"
+  },
+  
+  "breadcrumbs": {
+    "home": "Home",
+    "routes": {
+      "products": "Products",
+      "cart": "Cart",
+      "checkout": "Checkout",
+      "confirmation": "Confirmation",
+      "delivery": "Delivery",
+      "login": "Log in",
+      "register": "Register",
+      "forgot-password": "Forgot password",
+      "account": "Account",
+      "admin": "Admin",
+      "scraping": "Scraping"
+    }
+  }
+  ,
+  "products": {
+    "title": "All items",
+    "filters": {
+      "availability": "Availability",
+      "inStock": "In stock",
+      "outOfStock": "Out of stock",
+      "price": "Price",
+      "to": "to",
+      "max": "Max",
+      "brand": "Brand",
+      "productType": "Product type",
+      "region": "Country/Region"
+    },
+    "count": "{count} products",
+    "sortBy": "Sort by:",
+    "sort": {
+      "best": "Best selling",
+      "alphaAsc": "Alphabetically, A-Z",
+      "alphaDesc": "Alphabetically, Z-A",
+      "priceAsc": "Price, low to high",
+      "priceDesc": "Price, high to low"
+    },
+    "quick": {
+      "inStock": "In stock and ready to ship.",
+      "about": "About this item",
+      "aboutText": "Packed with a rotating selection of Japan-inspired goodies. This is placeholder text for the quick view drawer.",
+      "viewDetails": "View full details"
+    }
+  },
+  "productDetail": {
+    "back": "Back",
+    "title": "Product",
+    "addToCart": "Add to Cart",
+    "description": "Placeholder description.",
+    "shipsTokyo": "Ships directly from Tokyo",
+    "securePayments": "Secure payments",
+    "whatsInside": "What's inside",
+    "feature1": "A curated selection of goodies.",
+    "feature2": "Fun snack mix and surprises.",
+    "feature3": "Great for gifting.",
+    "youMayLike": "You may also like",
+    "noRelatedProducts": "No related products available"
+  }
+}
+
