@@ -314,15 +314,15 @@ export default function CheckoutPage() {
                             <div className="text-sm text-blue-800 space-y-2">
                                 <div className="flex items-start gap-2">
                                     <span className="font-semibold text-blue-600">1. Authorization:</span>
-                                    <span>When you complete your order, we'll authorize ¥{subtotal.toLocaleString()} (product cost) on your card. This reserves the funds but doesn't charge you yet.</span>
+                                    <span>When you complete your order, we&apos;ll authorize ¥{subtotal.toLocaleString()} (product cost) on your card. This reserves the funds but doesn&apos;t charge you yet.</span>
                                 </div>
                                 <div className="flex items-start gap-2">
                                     <span className="font-semibold text-blue-600">2. Shipping Calculation:</span>
-                                    <span>Once we determine the final shipping cost, we'll calculate your total.</span>
+                                    <span>Once we determine the final shipping cost, we&apos;ll calculate your total.</span>
                                 </div>
                                 <div className="flex items-start gap-2">
                                     <span className="font-semibold text-blue-600">3. Final Charge:</span>
-                                    <span>After your items ship, we'll charge the total amount (products + shipping) to your card.</span>
+                                    <span>After your items ship, we&apos;ll charge the total amount (products + shipping) to your card.</span>
                                 </div>
                             </div>
                         </div>

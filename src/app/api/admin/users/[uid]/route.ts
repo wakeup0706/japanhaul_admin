@@ -3,10 +3,10 @@ import { deleteAdminUser } from '@/lib/db/scraped-products';
 
 export async function DELETE(
     request: NextRequest,
-    { params }: { params: { uid: string } }
+    { params }: { params: Promise<{ uid: string }> }
 ) {
     try {
-        await deleteAdminUser(params.uid);
+        await deleteAdminUser((await params).uid);
 
         return NextResponse.json({
             success: true,

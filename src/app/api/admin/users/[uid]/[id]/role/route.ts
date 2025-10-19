@@ -3,7 +3,7 @@ import { getAdminUserByUID, upsertAdminUser, getRolePermissions } from '@/lib/db
 
 export async function PUT(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
         const { role } = await request.json();
@@ -16,7 +16,7 @@ export async function PUT(
         }
 
         // Get current user data
-        const currentUser = await getAdminUserByUID(params.id);
+        const currentUser = await getAdminUserByUID((await params).id);
         if (!currentUser) {
             return NextResponse.json(
                 { error: 'User not found' },

@@ -2,14 +2,14 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export async function PUT(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
         const updates = await request.json();
 
         // Here you would update the product in your database
         // For now, we'll simulate the update
-        console.log(`Updating product ${params.id} with:`, updates);
+        console.log(`Updating product ${(await params).id} with:`, updates);
 
         // In a real implementation, you would:
         // 1. Validate the product exists
@@ -19,7 +19,7 @@ export async function PUT(
         return NextResponse.json({
             success: true,
             message: 'Product updated successfully',
-            product: { id: params.id, ...updates }
+            product: { id: (await params).id, ...updates }
         });
     } catch (error) {
         console.error('Error updating product:', error);
@@ -32,11 +32,11 @@ export async function PUT(
 
 export async function DELETE(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
         // Here you would delete the product from your database
-        console.log(`Deleting product ${params.id}`);
+        console.log(`Deleting product ${(await params).id}`);
 
         // In a real implementation, you would:
         // 1. Validate the product exists

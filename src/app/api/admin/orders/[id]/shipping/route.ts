@@ -3,7 +3,7 @@ import { updateOrderShippingFee } from '@/lib/db/scraped-products';
 
 export async function PUT(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
         const { shippingFee } = await request.json();
@@ -15,7 +15,7 @@ export async function PUT(
             );
         }
 
-        const orderId = await updateOrderShippingFee(params.id, shippingFee);
+        const orderId = await updateOrderShippingFee((await params).id, shippingFee);
 
         return NextResponse.json({
             success: true,

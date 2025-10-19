@@ -3,7 +3,7 @@ import { updateOrderStatus } from '@/lib/db/scraped-products';
 
 export async function PUT(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
         const { status } = await request.json();
@@ -15,7 +15,7 @@ export async function PUT(
             );
         }
 
-        const orderId = await updateOrderStatus(params.id, status);
+        const orderId = await updateOrderStatus((await params).id, status);
 
         return NextResponse.json({
             success: true,

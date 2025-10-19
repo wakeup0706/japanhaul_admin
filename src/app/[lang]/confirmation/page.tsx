@@ -97,7 +97,7 @@ export default function ConfirmationPage() {
 						<div className="font-semibold text-blue-900 mb-1">💳 Payment Status</div>
 						<div className="text-blue-800">
 							✅ <strong>Authorized:</strong> Your payment method has been verified and ${paymentIntentId ? 'the product amount' : 'your order amount'} is reserved.<br/>
-							⏳ <strong>Final Settlement:</strong> You'll be charged the final amount (including shipping) once your items are shipped.
+							⏳ <strong>Final Settlement:</strong> You&apos;ll be charged the final amount (including shipping) once your items are shipped.
 						</div>
 					</div>
 				)}

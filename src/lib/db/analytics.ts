@@ -98,7 +98,7 @@ export async function getAnalyticsData(
         const startTimestamp = Timestamp.fromDate(startDate);
         const endTimestamp = Timestamp.fromDate(endDate);
 
-        let constraints: QueryConstraint[] = [
+        const constraints: QueryConstraint[] = [
             where('timestamp', '>=', startTimestamp),
             where('timestamp', '<=', endTimestamp),
         ];
