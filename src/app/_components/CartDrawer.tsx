@@ -11,7 +11,7 @@ export default function CartDrawer({ lang, open, onClose }: { lang: string; open
     const { state, dispatch, subtotal } = useCart();
     const itemCount = state.items.reduce((sum, i) => sum + i.quantity, 0);
     const formatPrice = (amount: number) =>
-        new Intl.NumberFormat(lang === "ja" ? "ja-JP" : "en-US", { style: "currency", currency: "USD", maximumFractionDigits: 2 }).format(amount);
+        new Intl.NumberFormat(lang === "ja" ? "ja-JP" : "en-US", { style: "currency", currency: "JPY", maximumFractionDigits: 0 }).format(amount);
     
     // Translate product name (Product N -> 商品 N in Japanese)
     const translateProductName = (title: string) => {

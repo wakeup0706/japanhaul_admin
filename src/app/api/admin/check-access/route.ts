@@ -1,66 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-
-// Admin users with roles - in production, store this in a database
-interface AdminUser {
-    email: string;
-    role: 'super_admin' | 'admin' | 'general' | 'test_mode';
-    name?: string;
-    permissions?: string[];
-}
-
-const ADMIN_USERS: AdminUser[] = [
-    {
-        email: 'superadmin@japanhaul.com',
-        role: 'super_admin',
-        name: 'Super Administrator',
-        permissions: ['all']
-    },
-    {
-        email: 'admin@japanhaul.com',
-        role: 'admin',
-        name: 'Administrator',
-        permissions: ['manage_products', 'manage_orders', 'view_analytics']
-    },
-    {
-        email: 'general@japanhaul.com',
-        role: 'general',
-        name: 'General Staff',
-        permissions: ['view_products', 'view_orders']
-    },
-    {
-        email: 'test@japanhaul.com',
-        role: 'test_mode',
-        name: 'Test User',
-        permissions: ['test_features']
-    },
-    // Add more admin emails as needed
-];
-
-// Role-based permissions
-const ROLE_PERMISSIONS = {
-    super_admin: [
-        'all',
-        'manage_users',
-        'manage_products',
-        'manage_orders',
-        'view_analytics',
-        'system_settings',
-        'test_features'
-    ],
-    admin: [
-        'manage_products',
-        'manage_orders',
-        'view_analytics'
-    ],
-    general: [
-        'view_products',
-        'view_orders'
-    ],
-    test_mode: [
-        'test_features',
-        'view_products'
-    ]
-};
+import { getAdminUserByUID } from '@/lib/db/scraped-products';
 
 export async function POST(request: NextRequest) {
     try {
@@ -74,8 +13,8 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // Find user in admin list
-        const adminUser = ADMIN_USERS.find(user => user.email === email);
+        // Check if user exists in admin users database
+        const adminUser = await getAdminUserByUID(uid);
 
         if (!adminUser) {
             return NextResponse.json({
@@ -88,20 +27,17 @@ export async function POST(request: NextRequest) {
             });
         }
 
-        // Get permissions for the role
-        const rolePermissions = ROLE_PERMISSIONS[adminUser.role] || [];
-
         // Check if user has 'all' permission (super admin)
-        const hasAllAccess = rolePermissions.includes('all');
+        const hasAllAccess = adminUser.permissions.includes('all');
 
         return NextResponse.json({
             hasAccess: true,
             isAdmin: true,
             role: adminUser.role,
-            permissions: rolePermissions,
+            permissions: adminUser.permissions,
             name: adminUser.name,
-            email,
-            uid,
+            email: adminUser.email,
+            uid: adminUser.uid,
             hasAllAccess,
         });
 

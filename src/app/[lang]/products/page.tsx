@@ -139,7 +139,7 @@ export default function ProductsPage() {
     const formatPrice = (amount: number) =>
         new Intl.NumberFormat(lang === "ja" ? "ja-JP" : "en-US", {
             style: "currency",
-            currency: "USD",
+            currency: "JPY",
             maximumFractionDigits: 2
         }).format(amount);
     
@@ -381,7 +381,7 @@ export default function ProductsPage() {
                                         <div className="relative aspect-[4/3] overflow-hidden rounded-lg border bg-white group-hover:shadow-md group-hover:-translate-y-0.5 transition-transform">
                                             <Image
                                                 src={product.imageUrl || "/placeholder.jpg"}
-                                                alt={product.title}
+                                                alt={product.title || `Popular product #${idx + 1}`}
                                                 className="object-cover"
                                                 fill
                                                 sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
@@ -396,7 +396,7 @@ export default function ProductsPage() {
                                                 Bought {product.purchaseCount} times
                                             </div>
                                             <div className="text-green-600 font-semibold">
-                                                ${product.totalRevenue.toFixed(2)} earned
+                                                ¥{product.totalRevenue.toLocaleString()} earned
                                             </div>
                                         </div>
                                     </Link>
@@ -513,7 +513,7 @@ export default function ProductsPage() {
                                     {/* Base image */}
                                     <Image
                                         src={p.imageUrl || "/placeholder.jpg"}
-                                        alt={p.title}
+                                        alt={p.title || "Product image"}
                                         width={600}
                                         height={450}
                                         className="h-full w-full object-cover object-center transition-transform duration-500 ease-out group-hover:scale-105"
@@ -526,7 +526,7 @@ export default function ProductsPage() {
                                     {/* Hover image (crossfade) */}
                                     <Image
                                         src={p.imageUrl || "/placeholder_alt.jpg"}
-                                        alt={`${p.title} alt`}
+                                        alt={`${p.title || "Product"} alternate view`}
                                         width={600}
                                         height={450}
                                         className="absolute inset-0 h-full w-full object-cover object-center opacity-0 transition-opacity duration-300 ease-out group-hover:opacity-100 pointer-events-none"
@@ -601,7 +601,7 @@ export default function ProductsPage() {
                             <div className="aspect-[4/3] w-full overflow-hidden rounded-lg border bg-gray-50">
                                 <Image
                                     src={quickView.imageUrl || "/placeholder.jpg"}
-                                    alt={quickView.title}
+                                    alt={quickView.title || "Product image"}
                                     width={900}
                                     height={675}
                                     className="h-full w-full object-cover"

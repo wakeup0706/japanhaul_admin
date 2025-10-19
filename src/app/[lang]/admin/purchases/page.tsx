@@ -7,6 +7,7 @@ import { useState, useEffect } from "react";
 import { onAuthStateChanged, signOut } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import type { OrderData } from "@/lib/db/scraped-products";
+import { useAnalytics } from "@/lib/hooks/useAnalytics";
 
 interface OrdersResponse {
     orders: OrderData[];
@@ -18,6 +19,9 @@ export default function PurchasesAdminPage() {
     const lang = rawLang === "ja" ? "ja" : "en";
     const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
     const [isLoading, setIsLoading] = useState(true);
+
+    // Analytics tracking
+    const { trackFeatureUsage } = useAnalytics();
 
     // Orders state
     const [orders, setOrders] = useState<OrderData[]>([]);
@@ -34,7 +38,7 @@ export default function PurchasesAdminPage() {
                         headers: {
                             'Content-Type': 'application/json',
                         },
-                        body: JSON.stringify({ uid: user.uid }),
+                        body: JSON.stringify({ uid: user.uid, email: user.email }),
                     });
 
                     if (response.ok) {
@@ -84,6 +88,79 @@ export default function PurchasesAdminPage() {
             await signOut(auth);
         } catch (error) {
             console.error('Error signing out:', error);
+        }
+    };
+
+    const handleUpdateShippingFee = async (orderId: string, paymentIntentId: string) => {
+        const shippingInput = document.getElementById(`shipping-${orderId}`) as HTMLInputElement;
+        const shippingFee = parseFloat(shippingInput?.value || '0');
+
+        if (shippingFee < 0) {
+            alert('Shipping fee cannot be negative');
+            return;
+        }
+
+        try {
+            // Update shipping fee in order
+            const response = await fetch(`/api/admin/orders/${orderId}/shipping`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ shippingFee }),
+            });
+
+            if (response.ok) {
+                // Mark order as processing
+                await fetch(`/api/admin/orders/${orderId}/status`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ status: 'processing' }),
+                });
+
+                alert('Shipping fee updated and order marked as processing!');
+                loadOrders(); // Refresh the orders list
+                trackFeatureUsage('update_shipping_fee', { orderId, shippingFee });
+            } else {
+                throw new Error('Failed to update shipping fee');
+            }
+        } catch (error) {
+            console.error('Error updating shipping fee:', error);
+            alert('Failed to update shipping fee');
+        }
+    };
+
+    const handleCapturePayment = async (paymentIntentId: string, authorizedAmount: number, shippingFee: number) => {
+        if (!confirm(`Capture payment for ¥${(authorizedAmount + shippingFee).toLocaleString()}? (Authorized: ¥${authorizedAmount.toLocaleString()} + Shipping: ¥${shippingFee.toLocaleString()})`)) {
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/capture-payment', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    paymentIntentId,
+                    shippingFee,
+                    finalAmount: Math.round((authorizedAmount + shippingFee) * 100) // Convert to cents
+                }),
+            });
+
+            if (response.ok) {
+                alert('Payment captured successfully!');
+                loadOrders(); // Refresh the orders list
+                trackFeatureUsage('capture_payment', { paymentIntentId, finalAmount: authorizedAmount + shippingFee });
+            } else {
+                const error = await response.json();
+                throw new Error(error.error || 'Failed to capture payment');
+            }
+        } catch (error) {
+            console.error('Error capturing payment:', error);
+            alert(`Failed to capture payment: ${error instanceof Error ? error.message : 'Unknown error'}`);
         }
     };
 
@@ -140,15 +217,38 @@ export default function PurchasesAdminPage() {
             <header className="bg-white shadow">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex justify-between items-center py-6">
-                        <div className="flex items-center">
+                        <div className="flex items-center space-x-4">
                             <h1 className="text-3xl font-bold text-gray-900">Purchase Management</h1>
+                            <div className="flex space-x-2">
+                                <Link
+                                    href={`/${lang}/admin/products`}
+                                    className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm"
+                                >
+                                    📦 Products
+                                </Link>
+                                <Link
+                                    href={`/${lang}/admin/profit`}
+                                    className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 text-sm"
+                                >
+                                    💰 Profit
+                                </Link>
+                                <Link
+                                    href={`/${lang}/admin/analytics`}
+                                    className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 text-sm"
+                                >
+                                    📊 Analytics
+                                </Link>
+                                <Link
+                                    href={`/${lang}/admin/users`}
+                                    className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 text-sm"
+                                >
+                                    👥 Users
+                                </Link>
+                            </div>
                         </div>
                         <div className="flex items-center space-x-4">
-                            <Link href={`/${lang}`} className="text-gray-600 hover:text-gray-900">
+                            <Link href={`/${lang}`} className="text-gray-600 hover:text-gray-900 text-sm">
                                 Back to Site
-                            </Link>
-                            <Link href={`/${lang}/admin/products`} className="text-gray-600 hover:text-gray-900">
-                                Admin Dashboard
                             </Link>
                             <button
                                 onClick={handleSignOut}
@@ -193,7 +293,7 @@ export default function PurchasesAdminPage() {
                                                     {order.orderStatus?.toUpperCase() || 'PENDING'}
                                                 </div>
                                                 <p className="text-sm text-gray-600 mt-1">
-                                                    ${order.total?.toFixed(2)} • {formatDate(order.createdAt)}
+                                                    ¥{order.total?.toLocaleString()} • {formatDate(order.createdAt)}
                                                 </p>
                                             </div>
                                         </div>
@@ -250,7 +350,7 @@ export default function PurchasesAdminPage() {
                                                         <div className="w-12 h-12 relative flex-shrink-0">
                                                             <Image
                                                                 src={item.imageUrl || "/placeholder.jpg"}
-                                                                alt={item.title}
+                                                                alt={item.title || "Product image"}
                                                                 className="object-cover rounded"
                                                                 fill
                                                                 sizes="48px"
@@ -263,7 +363,7 @@ export default function PurchasesAdminPage() {
                                                             </div>
                                                         </div>
                                                         <div className="text-right text-sm">
-                                                            <div className="font-medium">${item.price.toFixed(2)}</div>
+                                                            <div className="font-medium">¥{item.price.toLocaleString()}</div>
                                                             <div className="text-gray-600">Qty: {item.quantity}</div>
                                                         </div>
                                                     </div>
@@ -271,14 +371,14 @@ export default function PurchasesAdminPage() {
                                             </div>
                                             <div className="mt-3 pt-3 border-t text-right">
                                                 <div className="text-sm">
-                                                    <span className="font-medium">Subtotal:</span> ${order.subtotal?.toFixed(2)}
+                                                    <span className="font-medium">Subtotal:</span> ¥{order.subtotal?.toLocaleString()}
                                                     {order.shippingFee && (
                                                         <span className="ml-4">
-                                                            <span className="font-medium">Shipping:</span> ${order.shippingFee.toFixed(2)}
+                                                            <span className="font-medium">Shipping:</span> ¥{order.shippingFee.toLocaleString()}
                                                         </span>
                                                     )}
                                                     <span className="ml-4 font-semibold">
-                                                        Total: ${order.total?.toFixed(2)}
+                                                        Total: ¥{order.total?.toLocaleString()}
                                                     </span>
                                                 </div>
                                             </div>
@@ -298,15 +398,44 @@ export default function PurchasesAdminPage() {
                                                     </span>
                                                 </div>
                                                 <div>
-                                                    <span className="font-medium">Authorized:</span> ${order.authorizedAmount?.toFixed(2) || '0.00'}
+                                                    <span className="font-medium">Authorized:</span> ¥{order.authorizedAmount?.toLocaleString() || '0'}
                                                     {order.capturedAmount && (
                                                         <span className="ml-2">
-                                                            <span className="font-medium">Captured:</span> ${order.capturedAmount.toFixed(2)}
+                                                            <span className="font-medium">Captured:</span> ¥{order.capturedAmount.toLocaleString()}
                                                         </span>
                                                     )}
                                                 </div>
                                             </div>
                                         </div>
+
+                                        {/* Shipping Fee Management */}
+                                        {order.orderStatus === 'confirmed' && (
+                                            <div className="mt-4 pt-4 border-t">
+                                                <div className="bg-orange-50 border border-orange-200 rounded-lg p-3 mb-3">
+                                                    <h6 className="font-semibold text-orange-900 mb-2">📦 Add Shipping Fee</h6>
+                                                    <div className="flex gap-2 items-end">
+                                                        <div className="flex-1">
+                                                            <label className="block text-sm font-medium text-orange-700 mb-1">Shipping Cost ($)</label>
+                                                            <input
+                                                                type="number"
+                                                                step="0.01"
+                                                                min="0"
+                                                                placeholder="0.00"
+                                                                className="border rounded p-2 w-full text-sm"
+                                                                id={`shipping-${order.id}`}
+                                                            />
+                                                        </div>
+                                                        <button
+                                                            onClick={() => order.id && handleUpdateShippingFee(order.id, order.paymentIntentId || '')}
+                                                            className="px-4 py-2 bg-orange-600 text-white text-sm font-medium rounded-md hover:bg-orange-700"
+                                                            disabled={!order.paymentIntentId || !order.id}
+                                                        >
+                                                            Update & Process
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
 
                                         {/* Action Buttons */}
                                         <div className="mt-4 pt-4 border-t flex justify-end gap-2">
@@ -321,7 +450,11 @@ export default function PurchasesAdminPage() {
                                                 </button>
                                             )}
                                             {order.paymentStatus === 'authorized' && order.orderStatus === 'shipped' && (
-                                                <button className="px-4 py-2 bg-purple-600 text-white text-sm font-medium rounded-md hover:bg-purple-700">
+                                                <button
+                                                    onClick={() => handleCapturePayment(order.paymentIntentId || '', order.authorizedAmount || 0, order.shippingFee || 0)}
+                                                    className="px-4 py-2 bg-purple-600 text-white text-sm font-medium rounded-md hover:bg-purple-700"
+                                                    disabled={!order.paymentIntentId || !order.authorizedAmount}
+                                                >
                                                     Capture Payment
                                                 </button>
                                             )}

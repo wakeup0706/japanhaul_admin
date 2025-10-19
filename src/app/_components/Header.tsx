@@ -230,7 +230,7 @@ function SearchResults({ lang, queryState, onClose }: { lang: "en" | "ja"; query
                         <div className="h-10 w-12 rounded bg-gray-100 border" />
                         <div className="min-w-0 flex-1">
                             <div className="truncate font-medium">{p.title}</div>
-                            <div className="text-xs text-gray-600">${p.price.toFixed(2)} USD</div>
+                            <div className="text-xs text-gray-600">¥{p.price.toLocaleString()} JPY</div>
                         </div>
                         <Link href={`/${lang}/products/${p.id}`} className="text-blue-600 hover:underline" onClick={onClose}>{t("search.view")}</Link>
                     </li>

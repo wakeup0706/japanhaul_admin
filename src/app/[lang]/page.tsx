@@ -67,7 +67,7 @@ export default function LocalizedHome({ params }: { params: Promise<{ lang: stri
                                 <div className="aspect-square overflow-hidden rounded-lg border bg-white group-hover:shadow-sm transition">
                                     <Image
                                         src={product.imageUrl || "/placeholder.jpg"}
-                                        alt={product.title}
+                                        alt={product.title || "Product"}
                                         width={600}
                                         height={600}
                                         className="h-full w-full object-cover"
@@ -76,10 +76,10 @@ export default function LocalizedHome({ params }: { params: Promise<{ lang: stri
                                 <div className="mt-2 text-sm leading-tight">
                                     <div className="font-bold group-hover:underline line-clamp-2">{product.title}</div>
                                     <div className="mt-0.5 text-[13px]">
-                                        <span className="font-semibold text-black">${product.price.toFixed(2)} USD</span>
+                                        <span className="font-semibold text-black">¥{product.price.toLocaleString()} JPY</span>
                                         {product.compareAt && (
                                             <span className="ml-2 text-gray-500 line-through text-xs">
-                                                ${product.compareAt.toFixed(2)}
+                                                ¥{product.compareAt.toLocaleString()}
                                             </span>
                                         )}
                                     </div>

@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    const { amount, currency = 'usd', metadata = {} } = await request.json();
+    const { amount, currency = 'jpy', metadata = {} } = await request.json();
 
     if (!amount || amount <= 0) {
       return NextResponse.json(
@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
     // Create a PaymentIntent with authorization only (no immediate capture)
     // Product price will be authorized, shipping fees captured later when shipped
     const paymentIntent = await stripe.paymentIntents.create({
-      amount: Math.round(amount * 100), // Convert to cents - only product price for now
+      amount: currency === 'jpy' ? amount : Math.round(amount * 100), // JPY uses whole numbers, USD uses cents
       currency: currency,
       metadata: metadata,
       capture_method: 'manual', // Manual capture - authorize now, capture later

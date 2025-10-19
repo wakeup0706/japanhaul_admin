@@ -44,7 +44,8 @@ export async function POST(request: NextRequest) {
     const authorizedAmount = paymentIntent.amount; // Amount that was authorized (product price only)
 
     // Calculate final capture amount (authorized amount + shipping fee)
-    const captureAmount = finalAmount || (authorizedAmount + Math.round(shippingFee * 100));
+    // JPY doesn't use cents, so we handle it differently from USD
+    const captureAmount = finalAmount || (authorizedAmount + (paymentIntent.currency === 'jpy' ? shippingFee : Math.round(shippingFee * 100)));
 
     // Capture the payment with the final amount
     const capturedPaymentIntent = await stripe.paymentIntents.capture(paymentIntentId, {

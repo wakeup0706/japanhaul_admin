@@ -32,14 +32,14 @@ export default function CartView({ lang }: { lang: "en" | "ja" }) {
                                     <div key={item.id} className="grid grid-cols-12 items-center gap-4 p-4">
                                         <div className="col-span-12 md:col-span-6 flex items-center gap-4 min-w-0">
                                             <div className="h-20 w-20 overflow-hidden rounded-lg border bg-gray-50 shrink-0">
-                                                <Image src={item.image || "/placeholder.jpg"} alt={item.title} width={80} height={80} className="h-full w-full object-cover" />
+                                                <Image src={item.image || "/placeholder.jpg"} alt={item.title || "Product"} width={80} height={80} className="h-full w-full object-cover" />
                                             </div>
                                             <div className="min-w-0">
                                                 <div className="truncate text-lg font-medium">{item.title}</div>
                                                 <button className="text-sm text-red-600 hover:underline" onClick={() => dispatch({ type: "remove", id: item.id })}>{t.remove}</button>
                                             </div>
                                         </div>
-                                        <div className="col-span-4 md:col-span-2 text-center text-base">${item.price.toFixed(2)} USD</div>
+                                        <div className="col-span-4 md:col-span-2 text-center text-base">¥{item.price.toLocaleString()} JPY</div>
                                         <div className="col-span-4 md:col-span-2 flex items-center justify-center">
                                             <div className="inline-flex items-center rounded-full border px-5 py-3 min-w-[160px] justify-between">
                                                 <button className="h-7 w-7 inline-flex items-center justify-center rounded-full hover:bg-gray-100 text-base" onClick={() => dispatch({ type: "setQty", id: item.id, quantity: Math.max(1, item.quantity - 1) })}>-</button>
@@ -47,7 +47,7 @@ export default function CartView({ lang }: { lang: "en" | "ja" }) {
                                                 <button className="h-7 w-7 inline-flex items-center justify-center rounded-full hover:bg-gray-100 text-base" onClick={() => dispatch({ type: "setQty", id: item.id, quantity: item.quantity + 1 })}>+</button>
                                             </div>
                                         </div>
-                                        <div className="col-span-4 md:col-span-2 text-right text-lg font-semibold">${(item.price * item.quantity).toFixed(2)} USD</div>
+                                        <div className="col-span-4 md:col-span-2 text-right text-lg font-semibold">¥{(item.price * item.quantity).toLocaleString()} JPY</div>
                                     </div>
                                 ))}
                             </div>

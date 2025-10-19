@@ -17,7 +17,7 @@ export default function AdminLoginPage() {
     const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
 
     // Get redirect URL from query params and ensure it has language prefix
-    const redirectParam = searchParams.get('redirect') || '/admin/scraping';
+    const redirectParam = searchParams.get('redirect') || '/admin/products';
     const redirectTo = redirectParam.startsWith('/') && !redirectParam.startsWith(`/${lang}/`)
         ? `/${lang}${redirectParam}`
         : redirectParam;

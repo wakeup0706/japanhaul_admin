@@ -158,7 +158,7 @@ export default function ProductDetail({ params }: { params: Promise<{ lang: stri
     const formatPrice = (amount: number) =>
         new Intl.NumberFormat(lang === "ja" ? "ja-JP" : "en-US", {
             style: "currency",
-            currency: "USD",
+            currency: "JPY",
             maximumFractionDigits: 2
         }).format(amount);
 

@@ -8,15 +8,15 @@
  */
 
 import { db } from '@/lib/firebase';
-import { 
-    collection, 
-    doc, 
-    setDoc, 
-    getDoc, 
-    getDocs, 
-    query, 
-    where, 
-    orderBy, 
+import {
+    collection,
+    doc,
+    setDoc,
+    getDoc,
+    getDocs,
+    query,
+    where,
+    orderBy,
     limit,
     deleteDoc,
     updateDoc,
@@ -31,14 +31,15 @@ import {
 export interface ScrapedProductDB {
     id: string;
     title: string;
-    price: number;
-    originalPrice?: number;
+    price: number; // Price in JPY (scraped amount)
+    displayPrice?: number; // Price with 20% markup (1200 yen for 1000 yen scraped)
+    originalPrice?: number; // Original scraped price before markup
     brand: string;
     category: string;
     imageUrl?: string;
     images?: string[]; // gallery images from detail page
     description?: string;
-    availability: 'in' | 'out';
+    availability: 'in' | 'out' | 'preorder';
     sourceUrl: string;
     sourceSite: string; // e.g., "Amnibus", "Anime Store JP"
     condition?: "new" | "used" | "refurbished";
@@ -166,7 +167,7 @@ export async function saveScrapedProductsBatch(
 export async function getAllScrapedProducts(
     filters?: {
         sourceSite?: string;
-        availability?: 'in' | 'out';
+        availability?: 'in' | 'out' | 'preorder';
         isActive?: boolean;
         limit?: number;
     }
@@ -234,56 +235,85 @@ export async function getScrapedProductsPage(limitCount: number = 48, cursor?: {
     nextCursor: { ts: number; id: string } | null;
 }> {
     try {
-        // Since scrapedAt is stored as ISO string (not Timestamp), we can't reliably order by it
-        // Instead, order by id (descending) which is based on URL hash
-        const constraints: QueryConstraint[] = [
-            orderBy('id', 'desc'),
-            limit(limitCount),
-        ];
-
+        console.log('📄 Fetching products page:', { limitCount, cursor });
+        
+        const collectionRef = collection(db, SCRAPED_PRODUCTS_COLLECTION);
+        
+        // Build query with pagination
+        let q;
         if (cursor && cursor.id) {
-            // Just use the ID for pagination
-            constraints.push(startAfter(cursor.id));
+            console.log('🔄 Using cursor to fetch next page, starting after ID:', cursor.id);
+            
+            // CRITICAL: We need to fetch the cursor document first to use as startAfter reference
+            const cursorDocRef = doc(db, SCRAPED_PRODUCTS_COLLECTION, cursor.id);
+            const cursorDocSnap = await getDoc(cursorDocRef);
+            
+            if (!cursorDocSnap.exists()) {
+                console.error('❌ Cursor document not found:', cursor.id);
+                // Start from beginning if cursor is invalid
+                q = query(collectionRef, orderBy('id', 'desc'), limit(limitCount));
+            } else {
+                // Use the document snapshot for startAfter
+                q = query(
+                    collectionRef,
+                    orderBy('id', 'desc'),
+                    startAfter(cursorDocSnap),
+                    limit(limitCount)
+                );
+            }
+        } else {
+            console.log('📋 Fetching first page');
+            q = query(collectionRef, orderBy('id', 'desc'), limit(limitCount));
         }
 
-        const q = query(collection(db, SCRAPED_PRODUCTS_COLLECTION), ...constraints);
         const snap = await getDocs(q);
+        console.log('✅ Fetched products:', snap.docs.length, 
+            'First ID:', snap.docs[0]?.id, 
+            'Last ID:', snap.docs[snap.docs.length - 1]?.id);
 
-        // Map products and ensure the id field matches the Firestore document ID
+        // Map products
         const products = snap.docs.map(d => {
             const data = d.data() as ScrapedProductDB;
             return {
                 ...data,
-                id: d.id, // Use Firestore document ID (p_xxxxx) instead of field id
-                originalId: data.id, // Preserve original ID if needed
+                id: d.id, // Use Firestore document ID
             } as ScrapedProductDB;
         });
 
-        // Compute next cursor from last doc
-        const lastDoc = snap.docs[snap.docs.length - 1];
+        // Compute next cursor
         let nextCursor = null;
+        const lastDoc = snap.docs[snap.docs.length - 1];
         
         if (lastDoc && snap.docs.length === limitCount) {
-            // Only provide cursor if we got a full page (means there might be more)
-            const lastData = lastDoc.data() as ScrapedProductDB;
+            // Full page means there might be more
             nextCursor = {
-                ts: 0, // Not used anymore, but keep for compatibility
-                id: lastData.id,
+                ts: 0, // Not used anymore
+                id: lastDoc.id,
             };
+            console.log('📍 Next cursor will be:', lastDoc.id);
+        } else {
+            console.log('🏁 Last page reached (got', snap.docs.length, 'of', limitCount, 'requested)');
         }
 
         return { products, nextCursor };
     } catch (error: any) {
-        console.error('Error getting paginated products from Firestore:', error);
+        console.error('❌ Error getting paginated products from Firestore:', error);
         
-        // Simple fallback: get all and return first page
+        // Fallback: get first page without cursor
         try {
-            const allQuery = query(collection(db, SCRAPED_PRODUCTS_COLLECTION), limit(limitCount));
+            const allQuery = query(
+                collection(db, SCRAPED_PRODUCTS_COLLECTION), 
+                orderBy('id', 'desc'),
+                limit(limitCount)
+            );
             const snap = await getDocs(allQuery);
-            const products = snap.docs.map(d => d.data() as ScrapedProductDB);
+            const products = snap.docs.map(d => ({
+                ...d.data(),
+                id: d.id,
+            } as ScrapedProductDB));
             return { products, nextCursor: null };
         } catch (fallbackError) {
-            console.error('Fallback also failed:', fallbackError);
+            console.error('❌ Fallback also failed:', fallbackError);
             throw error;
         }
     }
@@ -473,6 +503,401 @@ export async function getScrapingJobById(jobId: string): Promise<ScrapingJob | n
 }
 
 // ============================================================
+// ADMIN USER MANAGEMENT FUNCTIONS
+// ============================================================
+
+export interface AdminUser {
+    id: string;
+    uid: string;
+    email: string;
+    name?: string;
+    role: 'super_admin' | 'admin' | 'general' | 'test_mode';
+    permissions: string[];
+    createdAt: Date;
+    updatedAt: Date;
+    isActive: boolean;
+}
+
+/**
+ * Create or update admin user
+ */
+export async function upsertAdminUser(adminUser: Omit<AdminUser, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> {
+    try {
+        const adminUsersRef = collection(db, 'adminUsers');
+        const adminUserData = {
+            ...adminUser,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+        };
+
+        // Check if user already exists
+        const existingQuery = query(adminUsersRef, where('uid', '==', adminUser.uid));
+        const existingSnapshot = await getDocs(existingQuery);
+
+        if (!existingSnapshot.empty) {
+            // Update existing user
+            const existingDoc = existingSnapshot.docs[0];
+            await updateDoc(existingDoc.ref, {
+                ...adminUserData,
+                createdAt: existingDoc.data().createdAt, // Preserve original creation date
+            });
+            console.log(`✅ Updated admin user: ${adminUser.uid}`);
+            return existingDoc.id;
+        } else {
+            // Create new user
+            const docRef = await addDoc(adminUsersRef, adminUserData);
+            console.log(`✅ Created admin user: ${adminUser.uid}`);
+            return docRef.id;
+        }
+    } catch (error) {
+        console.error('❌ Error upserting admin user:', error);
+        throw error;
+    }
+}
+
+/**
+ * Get admin user by UID
+ */
+export async function getAdminUserByUID(uid: string): Promise<AdminUser | null> {
+    try {
+        const adminUsersRef = collection(db, 'adminUsers');
+        const q = query(adminUsersRef, where('uid', '==', uid), where('isActive', '==', true));
+        const querySnapshot = await getDocs(q);
+
+        if (!querySnapshot.empty) {
+            const doc = querySnapshot.docs[0];
+            const data = doc.data();
+            return {
+                id: doc.id,
+                ...data,
+                createdAt: data.createdAt.toDate(),
+                updatedAt: data.updatedAt.toDate(),
+            } as AdminUser;
+        }
+
+        return null;
+    } catch (error) {
+        console.error('❌ Error getting admin user:', error);
+        throw error;
+    }
+}
+
+/**
+ * Get all admin users
+ */
+export async function getAllAdminUsers(): Promise<AdminUser[]> {
+    try {
+        const adminUsersRef = collection(db, 'adminUsers');
+        const q = query(adminUsersRef, where('isActive', '==', true), orderBy('createdAt', 'desc'));
+        const querySnapshot = await getDocs(q);
+
+        return querySnapshot.docs.map(doc => {
+            const data = doc.data();
+            return {
+                id: doc.id,
+                ...data,
+                createdAt: data.createdAt.toDate(),
+                updatedAt: data.updatedAt.toDate(),
+            } as AdminUser;
+        });
+    } catch (error) {
+        console.error('❌ Error getting admin users:', error);
+        throw error;
+    }
+}
+
+/**
+ * Delete admin user (soft delete)
+ */
+export async function deleteAdminUser(uid: string): Promise<void> {
+    try {
+        const adminUsersRef = collection(db, 'adminUsers');
+        const q = query(adminUsersRef, where('uid', '==', uid));
+        const querySnapshot = await getDocs(q);
+
+        if (!querySnapshot.empty) {
+            const doc = querySnapshot.docs[0];
+            await updateDoc(doc.ref, {
+                isActive: false,
+                updatedAt: new Date(),
+            });
+            console.log(`✅ Soft deleted admin user: ${uid}`);
+        }
+    } catch (error) {
+        console.error('❌ Error deleting admin user:', error);
+        throw error;
+    }
+}
+
+/**
+ * Get default permissions for each role
+ */
+export function getRolePermissions(role: AdminUser['role']): string[] {
+    switch (role) {
+        case 'super_admin':
+            return [
+                'admin.login',
+                'admin.list.edit',
+                'admin.permissions.edit',
+                'products.view',
+                'products.edit',
+                'products.delete',
+                'products.popularity.view',
+                'orders.view',
+                'orders.edit',
+                'orders.capture',
+                'customers.view',
+                'analytics.view',
+                'analytics.export',
+                'analytics.profit.view',
+                'system.settings'
+            ];
+        case 'admin':
+            return [
+                'admin.login',
+                'admin.list.view',
+                'products.view',
+                'products.edit',
+                'products.popularity.view',
+                'orders.view',
+                'orders.edit',
+                'orders.capture',
+                'customers.view',
+                'analytics.view',
+                'analytics.profit.view'
+            ];
+        case 'general':
+            return [
+                'admin.login',
+                'products.view',
+                'products.popularity.view',
+                'orders.view',
+                'customers.view',
+                'analytics.view'
+            ];
+        case 'test_mode':
+            return [
+                'admin.login',
+                'products.view'
+            ];
+        default:
+            return [];
+    }
+}
+
+// Permission matrix configuration for UI display
+export interface PermissionMatrixItem {
+    function: string;
+    displayName: string;
+    description: string;
+    super_admin: boolean;
+    admin: boolean;
+    general: boolean;
+    test_mode: boolean;
+}
+
+export function getPermissionMatrix(): PermissionMatrixItem[] {
+    return [
+        {
+            function: 'admin.login',
+            displayName: 'Login',
+            description: 'Can log into the admin system',
+            super_admin: true,
+            admin: true,
+            general: true,
+            test_mode: true
+        },
+        {
+            function: 'admin.list.edit',
+            displayName: 'Admin List Editing',
+            description: 'Can edit admin user lists',
+            super_admin: true,
+            admin: true,
+            general: false,
+            test_mode: false
+        },
+        {
+            function: 'admin.permissions.edit',
+            displayName: 'Admin Permission Editing',
+            description: 'Can edit admin user permissions and roles',
+            super_admin: true,
+            admin: false,
+            general: false,
+            test_mode: false
+        },
+        {
+            function: 'products.view',
+            displayName: 'View Product Information',
+            description: 'Can view product details and listings',
+            super_admin: true,
+            admin: true,
+            general: true,
+            test_mode: true
+        },
+        {
+            function: 'products.edit',
+            displayName: 'Edit Products',
+            description: 'Can edit product information',
+            super_admin: true,
+            admin: true,
+            general: false,
+            test_mode: false
+        },
+        {
+            function: 'products.delete',
+            displayName: 'Delete Products',
+            description: 'Can delete products',
+            super_admin: true,
+            admin: false,
+            general: false,
+            test_mode: false
+        },
+        {
+            function: 'products.popularity.view',
+            displayName: 'Display by Popularity',
+            description: 'Can view and sort products by popularity metrics',
+            super_admin: true,
+            admin: true,
+            general: true,
+            test_mode: false
+        },
+        {
+            function: 'orders.view',
+            displayName: 'Purchase History',
+            description: 'Can view order and purchase history',
+            super_admin: true,
+            admin: true,
+            general: true,
+            test_mode: false
+        },
+        {
+            function: 'orders.edit',
+            displayName: 'Edit Orders',
+            description: 'Can edit order information',
+            super_admin: true,
+            admin: true,
+            general: false,
+            test_mode: false
+        },
+        {
+            function: 'orders.capture',
+            displayName: 'Capture Orders',
+            description: 'Can capture/process orders',
+            super_admin: true,
+            admin: true,
+            general: false,
+            test_mode: false
+        },
+        {
+            function: 'customers.view',
+            displayName: 'Customer List',
+            description: 'Can view customer information and lists',
+            super_admin: true,
+            admin: true,
+            general: true,
+            test_mode: false
+        },
+        {
+            function: 'analytics.view',
+            displayName: 'View Analytics',
+            description: 'Can view analytics dashboard',
+            super_admin: true,
+            admin: true,
+            general: true,
+            test_mode: false
+        },
+        {
+            function: 'analytics.export',
+            displayName: 'Export Analytics',
+            description: 'Can export analytics data',
+            super_admin: true,
+            admin: false,
+            general: false,
+            test_mode: false
+        },
+        {
+            function: 'analytics.profit.view',
+            displayName: 'Profit Management',
+            description: 'Can view profit analytics and management reports',
+            super_admin: true,
+            admin: true,
+            general: false,
+            test_mode: false
+        },
+        {
+            function: 'system.settings',
+            displayName: 'System Settings',
+            description: 'Can access system settings',
+            super_admin: true,
+            admin: false,
+            general: false,
+            test_mode: false
+        }
+    ];
+}
+
+// ============================================================
+// PRICING UTILITY FUNCTIONS
+// ============================================================
+
+/**
+ * Calculate display price with 20% markup
+ */
+export function calculateDisplayPrice(scrapedPrice: number): number {
+    return Math.round(scrapedPrice * 1.2); // 20% markup
+}
+
+/**
+ * Calculate price with markup for multiple items
+ */
+export function calculateSubtotalWithMarkup(items: Array<{price: number, quantity: number}>): number {
+    return items.reduce((total, item) => total + (calculateDisplayPrice(item.price) * item.quantity), 0);
+}
+
+/**
+ * Calculate original subtotal (without markup)
+ */
+export function calculateOriginalSubtotal(items: Array<{price: number, quantity: number}>): number {
+    return items.reduce((total, item) => total + (item.price * item.quantity), 0);
+}
+
+
+/**
+ * Initialize default admin users if none exist
+ * This should be called during first-time setup or deployment
+ */
+export async function initializeDefaultAdminUsers(): Promise<void> {
+    try {
+        const existingUsers = await getAllAdminUsers();
+
+        if (existingUsers.length === 0) {
+            console.log('🔧 No admin users found. Creating default super admin...');
+
+            // Create a default super admin
+            // Note: In a real application, you might want to create this through environment variables
+            // or a secure setup process rather than hardcoded values
+            const defaultAdmin = {
+                uid: 'default-super-admin-uid', // This should be replaced with actual Firebase Auth UID
+                email: 'admin@yourdomain.com', // Replace with your actual admin email
+                name: 'Default Super Admin',
+                role: 'super_admin' as const,
+                permissions: getRolePermissions('super_admin'),
+                isActive: true,
+            };
+
+            await upsertAdminUser(defaultAdmin);
+            console.log('✅ Default super admin created successfully');
+        } else {
+            console.log(`✅ Found ${existingUsers.length} existing admin users`);
+        }
+    } catch (error) {
+        console.error('❌ Error initializing default admin users:', error);
+        throw error;
+    }
+}
+
+
+// ============================================================
 // UTILITY FUNCTIONS
 // ============================================================
 
@@ -548,14 +973,16 @@ export interface OrderData {
     items: Array<{
         productId: string;
         title: string;
-        price: number;
+        price: number; // Display price in JPY (with markup)
+        originalPrice: number; // Original scraped price in JPY
         quantity: number;
         imageUrl?: string;
         sourceUrl?: string;
     }>;
-    subtotal: number;
-    total: number;
-    shippingFee?: number;
+    subtotal: number; // Subtotal with markup in JPY
+    originalSubtotal: number; // Subtotal without markup in JPY
+    total: number; // Final total in JPY (subtotal + shipping)
+    shippingFee?: number; // Shipping fee in JPY
 
     // Payment Information
     paymentIntentId: string;
@@ -642,6 +1069,35 @@ export async function updateOrderStatus(orderId: string, status: OrderData['orde
         console.log(`✅ Order ${orderId} status updated to: ${status}`);
     } catch (error) {
         console.error('❌ Error updating order status:', error);
+        throw error;
+    }
+}
+
+/**
+ * Update order shipping fee and recalculate total
+ */
+export async function updateOrderShippingFee(orderId: string, shippingFee: number): Promise<string> {
+    try {
+        const orderRef = doc(db, 'orders', orderId);
+        const orderSnap = await getDoc(orderRef);
+
+        if (!orderSnap.exists()) {
+            throw new Error('Order not found');
+        }
+
+        const orderData = orderSnap.data() as OrderData;
+        const newTotal = orderData.subtotal + shippingFee;
+
+        await updateDoc(orderRef, {
+            shippingFee,
+            total: newTotal,
+            updatedAt: new Date(),
+        });
+
+        console.log(`✅ Order ${orderId} shipping fee updated to: $${shippingFee}, total: $${newTotal}`);
+        return orderId;
+    } catch (error) {
+        console.error('❌ Error updating order shipping fee:', error);
         throw error;
     }
 }

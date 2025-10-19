@@ -52,11 +52,20 @@ export async function GET(request: NextRequest) {
                 fixedPrice = Math.round((firstPrice / 150) * 100) / 100;
             }
 
+            // Map availability to frontend expected values
+            let mappedAvailability: 'in' | 'out' = 'in';
+            if (product.availability === 'preorder' || product.availability === 'in') {
+                mappedAvailability = 'in';
+            } else if (product.availability === 'out' || product.isSoldOut) {
+                mappedAvailability = 'out';
+            }
+
             // Translate product data if needed
             const productToTranslate = {
                 ...product,
                 price: fixedPrice,
                 type: product.category || 'General',
+                availability: mappedAvailability,
             };
 
             try {
@@ -81,12 +90,10 @@ export async function GET(request: NextRequest) {
             return NextResponse.json({ jobs });
         }
 
-        // Get all products with filters
-        // If a cursor or limit is provided, use the paginated fetcher for speed
-        if (limit || cursorTs || cursorId) {
-            const { products, nextCursor } = await getScrapedProductsPage(limit || 48, 
-                cursorTs && cursorId ? { ts: parseInt(cursorTs), id: cursorId } : undefined
-            );
+        // Get all products with filters - always use paginated version for consistency
+        const { products, nextCursor } = await getScrapedProductsPage(limit || 48,
+            cursorTs && cursorId ? { ts: parseInt(cursorTs), id: cursorId } : undefined
+        );
             
             // Transform products to match frontend expectations and fix prices
             const transformedProducts = products.map(p => {
@@ -100,62 +107,23 @@ export async function GET(request: NextRequest) {
                     fixedPrice = Math.round((firstPrice / 150) * 100) / 100;
                 }
 
+                // Map availability to frontend expected values
+                let mappedAvailability: 'in' | 'out' = 'in';
+                if (p.availability === 'preorder' || p.availability === 'in') {
+                    mappedAvailability = 'in';
+                } else if (p.availability === 'out' || p.isSoldOut) {
+                    mappedAvailability = 'out';
+                }
+
                 return {
                     ...p,
                     price: fixedPrice,
                     // Map category to type for frontend compatibility
                     type: p.category || 'General',
+                    // Map availability to expected values
+                    availability: mappedAvailability,
                 };
             });
-
-            // Apply translation if needed
-            try {
-                const translatedProducts = await translateProductsArray(transformedProducts, targetLanguage);
-
-                return NextResponse.json({
-                    success: true,
-                    products: translatedProducts,
-                    count: translatedProducts.length,
-                    nextCursor,
-                });
-            } catch (error) {
-                console.error('Translation failed for paginated products, returning original:', error);
-                return NextResponse.json({
-                    success: true,
-                    products: transformedProducts,
-                    count: transformedProducts.length,
-                    nextCursor,
-                });
-            }
-        }
-
-        // Fallback: non-paginated (filtered) fetch
-        const products = await getAllScrapedProducts({
-            sourceSite: sourceSite || undefined,
-            availability: availability || undefined,
-            isActive: true,
-            limit,
-        });
-        
-        // Transform products to match frontend expectations and fix prices
-        const transformedProducts = products.map(p => {
-            // Fix concatenated prices - extract first 4-5 digits as actual JPY price
-            let fixedPrice = p.price || 0;
-            if (fixedPrice > 100000) {
-                // Convert concatenated number to string and extract first 4-5 digits
-                const priceStr = String(fixedPrice);
-                const firstPrice = parseInt(priceStr.substring(0, Math.min(5, priceStr.length)));
-                // Convert JPY to USD (rough estimate: 1 USD = 150 JPY)
-                fixedPrice = Math.round((firstPrice / 150) * 100) / 100;
-            }
-
-            return {
-                ...p,
-                price: fixedPrice,
-                // Map category to type for frontend compatibility
-                type: p.category || 'General',
-            };
-        });
 
         // Apply translation if needed
         try {
@@ -165,15 +133,15 @@ export async function GET(request: NextRequest) {
                 success: true,
                 products: translatedProducts,
                 count: translatedProducts.length,
-                nextCursor: null,
+                nextCursor,
             });
         } catch (error) {
-            console.error('Translation failed for fallback products, returning original:', error);
+            console.error('Translation failed for paginated products, returning original:', error);
             return NextResponse.json({
                 success: true,
                 products: transformedProducts,
                 count: transformedProducts.length,
-                nextCursor: null,
+                nextCursor,
             });
         }
 

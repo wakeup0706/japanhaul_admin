@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createOrder, OrderData } from '@/lib/db/scraped-products';
+import { createOrder, OrderData, calculateDisplayPrice, calculateSubtotalWithMarkup, calculateOriginalSubtotal } from '@/lib/db/scraped-products';
 
 export async function POST(request: NextRequest) {
   try {
@@ -51,6 +51,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Calculate pricing with 20% markup
+    const itemsWithPricing = items.map(item => ({
+      ...item,
+      originalPrice: item.price, // Store original scraped price
+      price: calculateDisplayPrice(item.price), // Apply 20% markup for display
+    }));
+
+    const originalSubtotal = calculateOriginalSubtotal(items.map(item => ({ price: item.price, quantity: item.quantity })));
+    const subtotalWithMarkup = calculateSubtotalWithMarkup(items.map(item => ({ price: item.price, quantity: item.quantity })));
+
     // Create order data
     const orderData: Omit<OrderData, 'id' | 'createdAt' | 'updatedAt'> = {
       email,
@@ -61,13 +71,14 @@ export async function POST(request: NextRequest) {
       city,
       state,
       zipCode,
-      items,
-      subtotal,
-      total: subtotal, // Will be updated when shipping fee is added
+      items: itemsWithPricing,
+      subtotal: subtotalWithMarkup,
+      originalSubtotal,
+      total: subtotalWithMarkup, // Will be updated when shipping fee is added
       paymentIntentId,
       paymentStatus: 'authorized',
       orderStatus: 'confirmed',
-      authorizedAmount: subtotal,
+      authorizedAmount: originalSubtotal, // Authorize original price only (without markup)
       newsletterOptIn,
     };
 

@@ -80,7 +80,7 @@ function CheckoutForm({ subtotal, onPaymentSuccess, isDemoMode }: { subtotal: nu
             >
                 {isProcessing
                     ? (isDemoMode ? 'Processing Demo...' : 'Processing...')
-                    : (isDemoMode ? `Demo Pay $${subtotal.toFixed(2)}` : `Pay $${subtotal.toFixed(2)}`)
+                    : (isDemoMode ? `Demo Pay ¥${subtotal.toLocaleString()}` : `Pay ¥${subtotal.toLocaleString()}`)
                 }
             </button>
         </form>
@@ -197,7 +197,7 @@ export default function CheckoutPage() {
                     },
                     body: JSON.stringify({
                         amount: subtotal,
-                        currency: 'usd',
+                        currency: 'jpy',
                         metadata: {
                             itemCount: state.items.length,
                         },
@@ -308,6 +308,25 @@ export default function CheckoutPage() {
                     <h1 className="text-2xl font-semibold mb-4">{t("title")}</h1>
 
                     <div className="space-y-6">
+                        {/* Payment Flow Explanation */}
+                        <div className="bg-blue-50 border border-blue-200 rounded-md p-4 mb-6">
+                            <h2 className="font-semibold mb-3 text-blue-900">💳 How Payment Works</h2>
+                            <div className="text-sm text-blue-800 space-y-2">
+                                <div className="flex items-start gap-2">
+                                    <span className="font-semibold text-blue-600">1. Authorization:</span>
+                                    <span>When you complete your order, we'll authorize ¥{subtotal.toLocaleString()} (product cost) on your card. This reserves the funds but doesn't charge you yet.</span>
+                                </div>
+                                <div className="flex items-start gap-2">
+                                    <span className="font-semibold text-blue-600">2. Shipping Calculation:</span>
+                                    <span>Once we determine the final shipping cost, we'll calculate your total.</span>
+                                </div>
+                                <div className="flex items-start gap-2">
+                                    <span className="font-semibold text-blue-600">3. Final Charge:</span>
+                                    <span>After your items ship, we'll charge the total amount (products + shipping) to your card.</span>
+                                </div>
+                            </div>
+                        </div>
+
                         <div className="border rounded-md p-4">
                             <h2 className="font-semibold mb-3">{t("contact")}</h2>
                             <input
@@ -452,7 +471,7 @@ export default function CheckoutPage() {
                                     <div className="relative">
                                         <div className="h-16 w-16 overflow-hidden rounded border bg-white">
                                             {/* eslint-disable-next-line @next/next/no-img-element */}
-                                            <img src={i.image || "/placeholder.jpg"} alt={i.title} className="h-full w-full object-cover" />
+                                            <img src={i.image || "/placeholder.jpg"} alt={i.title || "Product"} className="h-full w-full object-cover" />
                                         </div>
                                         <span suppressHydrationWarning className="pointer-events-none absolute -top-2 -right-2 translate-x-1 inline-flex h-6 min-w-[1.5rem] items-center justify-center rounded-full bg-gray-800 px-2 text-xs font-semibold text-white">
                                             {mounted ? i.quantity : 0}
@@ -460,7 +479,7 @@ export default function CheckoutPage() {
                                     </div>
                                     <div className="min-w-0 flex-1">
                                         <div className="truncate text-sm font-medium">{i.title}</div>
-                                        <div className="text-sm text-gray-600">${i.price.toFixed(2)} USD</div>
+                                        <div className="text-sm text-gray-600">¥{i.price.toLocaleString()} JPY</div>
                                     </div>
                                 </div>
                             ))}
@@ -473,7 +492,7 @@ export default function CheckoutPage() {
                             <div className="border-t pt-4 space-y-2 text-sm">
                                 <div className="flex justify-between">
                                     <span>{t("subtotal")}</span>
-                                    <span>${subtotal.toFixed(2)}</span>
+                                    <span>¥{subtotal.toLocaleString()}</span>
                                 </div>
                                 <div className="flex justify-between">
                                     <span>{t("shipping")}</span>
@@ -481,7 +500,7 @@ export default function CheckoutPage() {
                                 </div>
                                 <div className="flex justify-between text-base font-semibold pt-2">
                                     <span>{t("total")}</span>
-                                    <span>USD ${subtotal.toFixed(2)}</span>
+                                    <span>JPY ¥{subtotal.toLocaleString()}</span>
                                 </div>
 					</div>
 				</div>

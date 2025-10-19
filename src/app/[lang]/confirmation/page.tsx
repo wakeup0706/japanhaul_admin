@@ -89,9 +89,18 @@ export default function ConfirmationPage() {
 					Order #{paymentIntentId?.slice(-8) || '000123'}
 					{isDemoMode && <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded">DEMO</span>}
 				</div>
-				<div className="text-sm text-gray-600">
-					{isDemoMode ? 'Demo payment completed - no real transaction occurred' : 'Payment confirmed successfully'}
+				<div className="text-sm text-gray-600 mb-3">
+					{isDemoMode ? 'Demo payment completed - no real transaction occurred' : 'Payment authorized successfully'}
 				</div>
+				{!isDemoMode && (
+					<div className="bg-blue-50 border border-blue-200 rounded p-3 text-sm">
+						<div className="font-semibold text-blue-900 mb-1">💳 Payment Status</div>
+						<div className="text-blue-800">
+							✅ <strong>Authorized:</strong> Your payment method has been verified and ${paymentIntentId ? 'the product amount' : 'your order amount'} is reserved.<br/>
+							⏳ <strong>Final Settlement:</strong> You'll be charged the final amount (including shipping) once your items are shipped.
+						</div>
+					</div>
+				)}
 			</div>
 			<Link href={`/${lang}`} className="inline-block bg-black text-white px-6 py-3 rounded font-semibold">
 				Continue Shopping
