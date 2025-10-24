@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "JapanHaul - Premium Japanese Products",
+  title: "Otaku Box - Premium Japanese Products",
   description: "Shop authentic Japanese products with worldwide shipping",
   viewport: "width=device-width, initial-scale=1, viewport-fit=cover",
 };

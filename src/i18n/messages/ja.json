@@ -1,5 +1,5 @@
 {
-  "site": {"title": "JapanHaul"},
+  "site": {"title": "オタクボックス"},
   "search": {
     "placeholder": "検索",
     "title": "検索",
@@ -71,7 +71,7 @@
       "privacy": "プライバシー",
       "terms": "利用規約"
     },
-    "copyright": "© 2025 JapanHaul クローン"
+    "copyright": "© 2025 オタクボックス"
   },
   "cart": {
     "title": "カート",
