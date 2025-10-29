@@ -69,9 +69,9 @@ export default function Header({ lang }: { lang: "en" | "ja" }) {
                     <Image
                         src="/logo.png"
                         alt="OtakuBox"
-                        width={200}
-                        height={60}
-                        className="h-12 md:h-16 lg:h-20 w-auto"
+                        width={160}
+                        height={48}
+                        className="h-8 md:h-10 lg:h-12 w-auto"
                         priority
                     />
                 </Link>
