@@ -65,9 +65,15 @@ export default function Header({ lang }: { lang: "en" | "ja" }) {
 		<div className="sticky top-0 z-40 bg-white/90 backdrop-blur border-b">
             <div className="w-full px-4 py-3 flex items-center gap-4">
                 {/* Logo */}
-                <Link href={`/${lang}`} className="flex items-center gap-2">
-                    <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-black text-white text-sm font-semibold">JH</span>
-                    <span className="text-xl md:text-2xl font-semibold">{t("site.title")}</span>
+                <Link href={`/${lang}`} className="flex items-center">
+                    <Image
+                        src="/logo.png"
+                        alt="OtakuBox"
+                        width={200}
+                        height={60}
+                        className="h-12 md:h-16 lg:h-20 w-auto"
+                        priority
+                    />
                 </Link>
                 <div className="flex-1" />
                 {/* Actions */}
